@@ -32,7 +32,7 @@ DEPS := $(C_ASMS:.asm=.d)
 COMMANDS := $(SRCS:%=$(BUILD_DIR)/%.asm.command)
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-CFLAGS := $(INC_FLAGS) -MMD -MP -target cdm -O2 -S
+CFLAGS := $(INC_FLAGS) -MMD -MP -ffreestanding -target cdm -O2 -S
 CC := $(BUILD_DIR)/clang-cdm
 DOWNLOAD_CC := $(findstring $(origin CC),file)
 
