@@ -17,6 +17,12 @@ ds 1  #0x8b
 input_state>
 ds 1  #0x8c
 
+asect 0x8e
+read_frame_index>
+ds 2 #0x8e
+read_frame_buffer>
+ds 128 #0x90
+
 rsect io_funcs
 
 timer_enable>

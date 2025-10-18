@@ -21,9 +21,24 @@ rsect handlers
 main: ext
 on_input_interrupt: ext
 on_timer_interrupt: ext
+read_frame_index: ext
+read_frame_buffer: ext
+display_write_range: ext
 
 asm_main>
-jsr main
+ldi r4, read_frame_index
+ldi r5, 0
+ldi r6, 2195
+while
+cmp r5, r6
+stays lt
+stw r4, r5
+ldi r0, read_frame_buffer
+ldi r1, 4
+ldi r2, 27
+jsr display_write_range
+inc r5
+wend
 halt
 
 asm_handler1>
