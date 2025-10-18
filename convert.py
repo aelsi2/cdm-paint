@@ -14,7 +14,7 @@ def get_value(frame, row, index):
     return result
 
 in_path = sys.argv[1]
-out_path = Path(in_path).stem + ".img"
+out_path = Path(in_path).stem + ".img" if len(sys.argv) < 3 else sys.argv[2]
 
 cap = cv2.VideoCapture(in_path)
 total = cap.get(cv2.CAP_PROP_FRAME_COUNT)

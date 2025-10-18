@@ -2,15 +2,17 @@ BUILD_DIR := ./build
 DIST_BASE_DIR := ./dist
 LOGISIM_DIR := ./logisim
 SRC_DIRS := ./src
+BAD_APPLE_VIDEO := ./bad_apple.mp4
 
 LOGISIM_PROJECT := $(LOGISIM_DIR)/cdm_paint.circ
 CDM_PLUGINS += $(LOGISIM_DIR)/logisim-cdm-emulator-0.2.2.jar
 CDM_PLUGINS += $(LOGISIM_DIR)/logisim-banked-memory-0.2.2.jar
 TIME_PLUGIN := $(LOGISIM_DIR)/logisim-time-1.1-all.jar
 TARGET_IMAGE := $(BUILD_DIR)/cdm_paint.img
+BAD_APPLE_IMAGE := $(BUILD_DIR)/bad_apple.img
 COMPILE_COMMANDS := ./compile_commands.json
 
-DIST_ASSETS := $(LOGISIM_PROJECT) $(TARGET_IMAGE) $(CDM_PLUGINS) $(TIME_PLUGIN)
+DIST_ASSETS := $(LOGISIM_PROJECT) $(TARGET_IMAGE) $(CDM_PLUGINS) $(TIME_PLUGIN) $(BAD_APPLE_IMAGE)
 DIST_DIR := $(DIST_BASE_DIR)/cdm_paint
 DIST_TAR := $(DIST_BASE_DIR)/cdm_paint.tar.gz
 DIST_ZIP := $(DIST_BASE_DIR)/cdm_paint.zip
@@ -37,7 +39,10 @@ CC := $(BUILD_DIR)/clang-cdm
 DOWNLOAD_CC := $(findstring $(origin CC),file)
 
 .PHONY: all
-all: $(TARGET_IMAGE) $(COMPILE_COMMANDS) $(CDM_PLUGINS) $(TIME_PLUGIN)
+all: $(TARGET_IMAGE) $(BAD_APPLE_IMAGE) $(COMPILE_COMMANDS) $(CDM_PLUGINS) $(TIME_PLUGIN)
+
+$(BAD_APPLE_IMAGE): $(BAD_APPLE_VIDEO) $(VENV_DIR)
+	$(VENV_DIR)/bin/python3 ./convert.py $< $@
 
 $(TARGET_IMAGE): $(ASMS) $(C_ASMS) $(if $(DOWNLOAD_ASM), $(ASM))
 	$(ASM) $(filter %.asm,$^) -o $@
@@ -59,6 +64,7 @@ $(ASM): $(VENV_DIR)
 
 $(VENV_DIR):
 	python3 -m venv $@
+	$(VENV_DIR)/bin/pip3 install opencv-python
 
 $(CDM_PLUGINS): $(CDM_PLUGIN_ARCHIVE)
 	tar -xzOf $< jar/$(notdir $@) > $@
@@ -89,6 +95,7 @@ $(DIST_DIR): $(DIST_ASSETS)
 	mkdir -p $@
 	cp $^ $@
 	sed -i 's/"[^"]*\($(notdir $(TARGET_IMAGE))\)"/"\1"/g' $@/$(notdir $(LOGISIM_PROJECT))
+	sed -i 's/"[^"]*\($(notdir $(BAD_APPLE_IMAGE))\)"/"\1"/g' $@/$(notdir $(LOGISIM_PROJECT))
 
 .PHONY: clean
 clean:
