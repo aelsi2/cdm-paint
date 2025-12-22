@@ -29,7 +29,7 @@ inline static void update_ui() {
     display_set_secondary_cursor(editor_state->secondary_cursor_pos);
 }
 
-void main() {
+__attribute__((CDM_ISR)) void main() {
     static dr_context_t ctx;
     static editor_state_t state;
     dr_context = &ctx;
