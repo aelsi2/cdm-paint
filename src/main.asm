@@ -8,14 +8,14 @@ asm_handler3: ext
 asm_handler4: ext
 
 # IVT
-dc main, 0b1000000000000000
+dc main, 0x8000
 dc asm_handler1, 0
 dc asm_handler2, 0
 dc asm_handler3, 0
 dc asm_handler4, 0
 dc on_input_interrupt, 0
 dc on_timer_interrupt, 0
-align 0x80
+align 0x100
 
 rsect handlers
 asm_handler1>

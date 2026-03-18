@@ -1,21 +1,21 @@
-asect 0x80
+asect 0x100
 
 display_row:
-ds 4  #0x80
+ds 4  #0x100
 display_row_index:
-ds 1  #0x84
+ds 1  #0x104
 timer_state:
-ds 1  #0x85
+ds 1  #0x105
 cursor1_position:
-ds 2  #0x86
+ds 2  #0x106
 cursor2_position:
-ds 2  #0x88
+ds 2  #0x108
 menu_data:
-ds 1  #0x8a
+ds 1  #0x10a
 menu_cursor_position:
-ds 1  #0x8b
+ds 1  #0x10b
 input_state>
-ds 1  #0x8c
+ds 1  #0x10c
 
 rsect io_funcs
 
