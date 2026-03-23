@@ -16,65 +16,46 @@ DIST_TAR := $(DIST_BASE_DIR)/cdm_paint.tar.gz
 DIST_ZIP := $(DIST_BASE_DIR)/cdm_paint.zip
 
 CDM_PLUGIN_URL := https://github.com/cdm-processors/cdm-devkit/releases/download/0.2.2/cdm-devkit-misc-0.2.2.tar.gz
-CC_URL := https://github.com/leadpogrommer/llvm-project-cdm/releases/download/cdm-ver-1.5/clang-cdm-ubuntu-latest.zip
 TIME_PLUGIN_URL := https://github.com/aelsi2/logisim_time/releases/download/v1.1/logisim-time-1.1-all.jar
-CDM_PLUGIN_ARCHIVE := $(BUILD_DIR)/cdm_devkit.tar.gz
-CC_ARCHIVE := $(BUILD_DIR)/clang-cdm.zip
 
-VENV_DIR := $(BUILD_DIR)/.venv
-ASM := $(VENV_DIR)/bin/cocas
-DOWNLOAD_ASM := $(findstring $(origin ASM),file)
+C_SOURCES := $(shell find $(SRC_DIRS) -name '*.c')
+ASM_SOURCES := $(shell find $(SRC_DIRS) -name '*.asm')
+C_OBJECTS := $(C_SOURCES:%=$(BUILD_DIR)/%.o)
+ASM_OBJECTS := $(ASM_SOURCES:%=$(BUILD_DIR)/%.o)
+COMMANDS := $(C_SOURCES:%=$(BUILD_DIR)/%.o.command)
 
-SRCS := $(shell find $(SRC_DIRS) -name '*.c')
-ASMS := $(shell find $(SRC_DIRS) -name '*.asm')
-C_ASMS := $(SRCS:%=$(BUILD_DIR)/%.asm)
-DEPS := $(C_ASMS:.asm=.d)
-COMMANDS := $(SRCS:%=$(BUILD_DIR)/%.asm.command)
-INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-CFLAGS := $(INC_FLAGS) -MMD -MP -ffreestanding -target cdm -O2 -S
-CC := $(BUILD_DIR)/clang-cdm
-DOWNLOAD_CC := $(findstring $(origin CC),file)
+CC := clang
+INC_FLAGS := $(addprefix -I,$(shell find $(SRC_DIRS) -type d))
+CFLAGS := -target cdm-cocas -ffreestanding -O2 -MMD -MP $(INC_FLAGS) 
+LDFLAGS := -nostartfiles
 
 .PHONY: all
 all: $(TARGET_IMAGE) $(COMPILE_COMMANDS) $(CDM_PLUGINS) $(TIME_PLUGIN)
 
-$(TARGET_IMAGE): $(ASMS) $(C_ASMS) $(if $(DOWNLOAD_ASM), $(ASM))
-	$(ASM) $(filter %.asm,$^) -o $@
+$(TARGET_IMAGE): $(ASM_OBJECTS) $(C_OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-$(C_ASMS): $(BUILD_DIR)/%.c.asm: %.c $(if $(DOWNLOAD_CC), $(CC))
+$(C_OBJECTS): $(BUILD_DIR)/%.o: %
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $< -o $@ -MJ $@.command
+	$(CC) $(CFLAGS) -c $< -o $@ -MJ $@.command 
+
+$(ASM_OBJECTS): $(BUILD_DIR)/%.o: %
+	mkdir -p $(dir $@)
+	$(CC) -c $< -o $@
 
 $(COMPILE_COMMANDS): $(COMMANDS)
 	rm -f $@
 	echo "[" >> $@
-	cat $^ | sed "s/,\?\s\+\"--target=cdm\"//g" >> $@
+	cat $^ | sed "s/,\?\s\+\"--target=cdm[a-z\-]*\"//g" >> $@
 	echo "]" >> $@
 
 $(COMMANDS): %.command: % ;
 
-$(ASM): $(VENV_DIR)
-	$(VENV_DIR)/bin/pip3 install cdm-devkit
-
-$(VENV_DIR):
-	python3 -m venv $@
-
-$(CDM_PLUGINS): $(CDM_PLUGIN_ARCHIVE)
-	tar -xzOf $< jar/$(notdir $@) > $@
-
-$(CDM_PLUGIN_ARCHIVE):
-	curl -L $(CDM_PLUGIN_URL) --create-dirs -o $@
+$(CDM_PLUGINS):
+	curl -L $(CDM_PLUGIN_URL) | tar -xzOf - jar/$(notdir $@) > $@
 
 $(TIME_PLUGIN):
 	curl -L $(TIME_PLUGIN_URL) --create-dirs -o $@
-
-$(CC): $(CC_ARCHIVE)
-	bsdtar -xOf $< clang-cdm-ubuntu-latest/clang-19 > $@
-	chmod uga+x $@
-
-$(CC_ARCHIVE):
-	curl -L $(CC_URL) --create-dirs -o $@
 
 .PHONY: dist
 dist: all $(DIST_DIR) $(DIST_ZIP) $(DIST_TAR) 
