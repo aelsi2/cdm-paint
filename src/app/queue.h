@@ -7,7 +7,7 @@
 #define QUEUE_SIZE 16
 
 // Represents a shape drawing queue.
-typedef struct { 
+typedef volatile struct {
     shape_t array[QUEUE_SIZE];
     int start_index;
     int end_index;

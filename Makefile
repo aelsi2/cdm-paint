@@ -2,6 +2,7 @@ BUILD_DIR := ./build
 DIST_BASE_DIR := ./dist
 LOGISIM_DIR := ./logisim
 SRC_DIRS := ./src
+LINKER_SCRIPT = ./link.ld
 
 LOGISIM_PROJECT := $(LOGISIM_DIR)/cdm_paint.circ
 CDM_PLUGINS += $(LOGISIM_DIR)/logisim-cdm-emulator-0.2.2.jar
@@ -18,6 +19,7 @@ DIST_ZIP := $(DIST_BASE_DIR)/cdm_paint.zip
 CDM_PLUGIN_URL := https://github.com/cdm-processors/cdm-devkit/releases/download/0.2.2/cdm-devkit-misc-0.2.2.tar.gz
 TIME_PLUGIN_URL := https://github.com/aelsi2/logisim_time/releases/download/v1.1/logisim-time-1.1-all.jar
 
+TARGET_BINARY = $(basename $(TARGET_IMAGE)).bin
 C_SOURCES := $(shell find $(SRC_DIRS) -name '*.c')
 ASM_SOURCES := $(shell find $(SRC_DIRS) -name '*.asm')
 C_OBJECTS := $(C_SOURCES:%=$(BUILD_DIR)/%.o)
@@ -26,22 +28,27 @@ COMMANDS := $(C_SOURCES:%=$(BUILD_DIR)/%.o.command)
 
 CC := clang
 INC_FLAGS := $(addprefix -I,$(shell find $(SRC_DIRS) -type d))
-CFLAGS := -target cdm-cocas -ffreestanding -O2 -MMD -MP $(INC_FLAGS) 
-LDFLAGS := -nostartfiles
+CFLAGS := -ffreestanding -O2 -MMD -MP $(INC_FLAGS)
+LDFLAGS := -T$(LINKER_SCRIPT)
+LLVM_FLAGS := -target cdm
 
 .PHONY: all
 all: $(TARGET_IMAGE) $(COMPILE_COMMANDS) $(CDM_PLUGINS) $(TIME_PLUGIN)
 
-$(TARGET_IMAGE): $(ASM_OBJECTS) $(C_OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+$(TARGET_IMAGE): $(TARGET_BINARY)
+	echo 'v2.0 raw' > $@
+	od -tx1 -An -v $< | tr -s '[:blank:]' '\n' >> $@
+
+$(TARGET_BINARY): $(ASM_OBJECTS) $(C_OBJECTS) $(LINKER_SCRIPT)
+	$(CC) $(LLVM_FLAGS) $(CFLAGS) $(LDFLAGS) $(filter %.o, $^) -o $@
 
 $(C_OBJECTS): $(BUILD_DIR)/%.o: %
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@ -MJ $@.command 
+	$(CC) $(LLVM_FLAGS) $(CFLAGS) -c $< -o $@ -MJ $@.command
 
 $(ASM_OBJECTS): $(BUILD_DIR)/%.o: %
 	mkdir -p $(dir $@)
-	$(CC) -c $< -o $@
+	$(CC) $(LLVM_FLAGS) -c $< -o $@
 
 $(COMPILE_COMMANDS): $(COMMANDS)
 	rm -f $@
@@ -52,10 +59,10 @@ $(COMPILE_COMMANDS): $(COMMANDS)
 $(COMMANDS): %.command: % ;
 
 $(CDM_PLUGINS):
-	curl -L $(CDM_PLUGIN_URL) | tar -xzOf - jar/$(notdir $@) > $@
+	curl --no-progress-meter -L $(CDM_PLUGIN_URL) | tar -xzOf - jar/$(notdir $@) > $@
 
 $(TIME_PLUGIN):
-	curl -L $(TIME_PLUGIN_URL) --create-dirs -o $@
+	curl --no-progress-meter -L $(TIME_PLUGIN_URL) --create-dirs -o $@
 
 .PHONY: dist
 dist: all $(DIST_DIR) $(DIST_ZIP) $(DIST_TAR) 

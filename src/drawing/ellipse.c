@@ -64,13 +64,13 @@ void dr_draw_outline_ellipse(point_t p1, point_t p2, color_t color) {
 
     int x = 0;
     int y = ry;
-    int ryry = multiply(ry, ry);
-    int rxrx = multiply(rx, rx);
+    int ryry = ry * ry;
+    int rxrx = rx * rx;
     
     int dx = 0;
-    int dy = multiply(rxrx, y) * 2;
+    int dy = rxrx * y * 2;
     
-    int d1 = ryry - multiply(rxrx, ry) + (rxrx / 4);
+    int d1 = ryry - (rxrx * ry) + (rxrx / 4);
 
     while(dx < dy){
         draw_outline_pixels(xc, yc, x, y, color, x_even, y_even);
@@ -89,8 +89,8 @@ void dr_draw_outline_ellipse(point_t p1, point_t p2, color_t color) {
         }
     }
 
-    int d2 = multiply(ryry, multiply(x * 2 + 1, x * 2 + 1) / 4) + 
-             multiply(rxrx, multiply(y - 1, y - 1) - ryry);
+    int d2 = ryry * ((x * 2 + 1) * (x * 2 + 1) / 4) +
+             rxrx * ((y - 1) * (y - 1) - ryry);
 
     while (y >= 0) {
         draw_outline_pixels(xc, yc, x, y, color, x_even, y_even);
@@ -133,13 +133,13 @@ void dr_draw_filled_ellipse(point_t p1, point_t p2, color_t color) {
 
     int x = 0;
     int y = ry;
-    int ryry = multiply(ry, ry);
-    int rxrx = multiply(rx, rx);
+    int ryry = ry * ry;
+    int rxrx = rx * rx;
     
     int dx = 0;
-    int dy = multiply(rxrx, y) * 2;
+    int dy = rxrx * y * 2;
     
-    int d1 = ryry - multiply(rxrx, ry) + (rxrx / 4);
+    int d1 = ryry - (rxrx * ry) + (rxrx / 4);
 
     while(dx < dy){
         draw_fill_pixels(xc, yc, x, y, color, x_even, y_even);
@@ -158,8 +158,8 @@ void dr_draw_filled_ellipse(point_t p1, point_t p2, color_t color) {
         }
     }
 
-    int d2 = multiply(ryry, multiply(x * 2 + 1, x * 2 + 1) / 4) + 
-             multiply(rxrx, multiply(y - 1, y - 1) - ryry);
+    int d2 = ryry * ((x * 2 + 1) * (x * 2 + 1) / 4) +
+             rxrx * ((y - 1) * (y - 1) - ryry);
 
     while (y >= 0) {
         draw_fill_pixels(xc, yc, x, y, color, x_even, y_even);
