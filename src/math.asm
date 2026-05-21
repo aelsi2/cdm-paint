@@ -1,7 +1,6 @@
 rsect multiply
 
 __mulhi3>
-multiply>
 ldi r2, 0
 while
 tst r1
